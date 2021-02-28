@@ -1,6 +1,6 @@
 # Reflections - Blazor
 
-Port of Reflections using Blazor/C#.
+Blazor port of Reflections.
 
 ## License
 The MIT License (MIT) 
