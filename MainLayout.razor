@@ -1,0 +1,85 @@
+@page "/"
+@using Reflections.Graphics
+@inherits LayoutComponentBase
+@inject IJSRuntime Js;
+@inject HttpClient Http
+
+<img style="display: none" src="images/environment.jpg" @ref="_texture" alt="Environment Map"/>
+<canvas class="viewport" width="@_visualizer.Width" height="@_visualizer.Height" @ref="_viewport"
+        @onmousedown="@(HandleMouseDown)" @onmousemove="@(HandleMouseMove)" @onmouseup="@(HandleMouseUp)">
+</canvas>
+<div class="options">
+    <a href="#&mesh=teapot.obj" @onclick="@(async () => await LoadMesh("teapot.obj"))">
+        <img src="images/teapot.png" width="128" height="128" alt="Teapot" title="Teapot">
+    </a>
+    <a href="#&mesh=nutbolt.obj" @onclick="@(async () => await LoadMesh("nutbolt.obj"))">
+        <img src="images/nutbolt.png" width="128" height="128" alt="Nut & Bolt" title="Nut & Bolt">
+    </a>
+    <a href="#&mesh=bart.obj" @onclick="@(async () => await LoadMesh("bart.obj"))">
+        <img src="images/bart.png" width="128" height="128" alt="Bart" title="Bart">
+    </a>
+    <a href="#&mesh=ram.obj" @onclick="@(async () => await LoadMesh("ram.obj"))">
+        <img src="images/ram.png" width="128" height="128" alt="Ram" title="Ram">
+    </a>
+    <a href="#&mesh=beethoven.obj" @onclick="@(async () => await LoadMesh("beethoven.obj"))">
+        <img src="images/beethoven.png" width="128" height="128" alt="Beethoven" title="Beethoven">
+    </a>
+    <a href="#&mesh=kingtut.obj" @onclick="@(async () => await LoadMesh("kingtut.obj"))">
+        <img src="images/kingtut.png" width="128" height="128" alt="King Tut" title="King Tut">
+    </a>
+    <a href="#&mesh=buddha.obj" @onclick="@(async () => await LoadMesh("buddha.obj"))">
+        <img src="images/buddha.png" width="128" height="128" alt="Buddha" title="Buddha">
+    </a>
+</div>
+
+@code {
+
+    ElementReference _viewport;
+    ElementReference _texture;
+    readonly Visualizer _visualizer = new(1024, 1024);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _visualizer.Mesh = Mesh.Load(await Http.GetStringAsync($"data/bart.obj"));
+        await Js.InvokeAsync<object>("initGame", DotNetObjectReference.Create(this));
+        _visualizer.Texture = new Texture(Convert.FromBase64String(await Js.InvokeAsync<string>("imageToData", _texture)));
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await Js.InvokeAsync<object>("initCanvas", _viewport);
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task LoadMesh(string obj)
+    {
+        _visualizer.Mesh = Mesh.Load(await Http.GetStringAsync($"data/{obj}"));
+    }
+
+    [JSInvokable]
+    public void GameLoop(float timeStamp)
+    {
+        if (Js is not IJSUnmarshalledRuntime webAssemblyJs) return;
+        webAssemblyJs.InvokeUnmarshalled<int[], int>("blit", _visualizer.RenderFrame(timeStamp));
+    }
+
+    private void HandleMouseDown(MouseEventArgs args)
+    {
+        if (args.Button == 0)
+        {
+            _visualizer.MouseDown(args.ClientX, args.ClientY);
+        }
+    }
+
+    private void HandleMouseMove(MouseEventArgs args)
+    {
+        _visualizer.MouseMove(args.ClientX, args.ClientY);
+    }
+
+    private void HandleMouseUp(MouseEventArgs args)
+    {
+        _visualizer.MouseUp();
+    }
+
+}

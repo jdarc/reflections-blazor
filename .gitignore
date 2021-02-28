@@ -1,0 +1,11 @@
+.idea/
+.idea_modules/
+
+out/
+bin/
+obj/
+
+/node_modules
+/wwwroot/node_modules
+
+*.iws
