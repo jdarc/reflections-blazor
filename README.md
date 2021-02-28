@@ -1,4 +1,4 @@
-# Reflections - Blazer/WebAssembly
+# Reflections - Blazor
 
 Port of Reflections using Blazor/C#.
 
